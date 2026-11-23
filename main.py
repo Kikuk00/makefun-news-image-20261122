@@ -1,31 +1,33 @@
 #!/usr/bin/env python3
-"""Entry program for news-image-20261122.
+"""Copy entry.png to the make.fun output directory (stdlib only).
 
-Copies the front-page image shipped in this repository to the output
-directory, so the grader sees exactly the image the entry was built with.
-Standard library only; no network. Deterministic: the image is a fixed
-file, so both runs write identical bytes.
+No network access. The output is a byte-for-byte copy of the bundled
+image, so repeated runs are deterministic.
 """
+
 import os
 import shutil
 import sys
 
-HERE = os.path.dirname(os.path.abspath(__file__))
+PNG_MAGIC = b"\x89PNG\r\n\x1a\n"
+SOURCE_NAME = "entry.png"
 
 
 def main():
-    src = os.path.join(HERE, "entry.png")
-    with open(src, "rb") as f:
-        head = f.read(8)
-    if head != b"\x89PNG\r\n\x1a\n":
-        raise SystemExit("entry.png is not a PNG file")
+    here = os.path.dirname(os.path.abspath(__file__))
+    src = os.path.join(here, SOURCE_NAME)
+    with open(src, "rb") as handle:
+        header = handle.read(len(PNG_MAGIC))
+    if header != PNG_MAGIC:
+        print(f"error: {src} is not a valid PNG file", file=sys.stderr)
+        return 1
     out_dir = os.environ.get("MAKEFUN_OUTPUT_DIR", "/output")
     os.makedirs(out_dir, exist_ok=True)
-    dst = os.path.join(out_dir, "entry.png")
-    shutil.copyfile(src, dst)
-    print("wrote", dst)
+    dest = os.path.join(out_dir, SOURCE_NAME)
+    shutil.copyfile(src, dest)
+    print(dest)
     return 0
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    raise SystemExit(main())
